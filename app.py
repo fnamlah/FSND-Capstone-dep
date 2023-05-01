@@ -43,11 +43,6 @@ def create_app(db_URI="", test_config=None):
 
 
     # 👆 We're continuing from the steps above. Append this to your server.py file.
-
-    @app.route("/")
-    def home():
-        return render_template("home.html", session=session.get('user'), pretty=json.dumps(session.get('user'), indent=4))
-    
     @app.route("/login")
     def login():
         return oauth.auth0.authorize_redirect(
@@ -68,6 +63,11 @@ def create_app(db_URI="", test_config=None):
             + urlencode({
                 "returnTo": url_for("home", _external=True),
                 "client_id": os.getenv("AUTH0_CLIENT_ID"),},quote_via=quote_plus,))
+
+    @app.route("/")
+    def home():
+        return render_template("home.html", session=session.get('user'), pretty=json.dumps(session.get('user'), indent=4))
+    
 
     @app.route('/login-results', methods=['GET', 'POST'])
     @req_auth

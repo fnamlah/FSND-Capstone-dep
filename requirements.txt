@@ -1,4 +1,8 @@
 alembic
+os
+datetime
+functools
+json
 blinker
 click
 ecdsa
@@ -27,3 +31,18 @@ Werkzeug
 python-dotenv
 authlib
 requests
+ssl
+astroid
+Click
+ecdsa
+future
+isort
+lazy-object-proxy
+mccabe
+pycryptodome
+pylint
+python-jose-cryptodome
+six
+typed-ast
+wrapt
+Flask-Cors
