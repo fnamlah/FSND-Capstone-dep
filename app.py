@@ -79,7 +79,7 @@ def create_app(db_URI="", test_config=None):
     ## _______________________________________________________ GET _______________________________________________________
     @app.route('/store/<int:store_id>', methods=['GET'])
     @requires_auth('get:store')
-    def get_store(store_id):
+    def get_store(store_id, jwt):
         store = Store.query.get(store_id)
         if not store:
             # Raise a 404 error if the store is not found
@@ -91,7 +91,7 @@ def create_app(db_URI="", test_config=None):
 
     @app.route('/product/<int:product_id>', methods=['GET'])
     @requires_auth('get:product')
-    def get_product(product_id):
+    def get_product(product_id, jwt):
         product = Product.query.get(product_id)
         if not product:
             # Raise a 404 error if the product is not found
