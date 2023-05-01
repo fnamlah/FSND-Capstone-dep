@@ -43,7 +43,7 @@ def create_app(db_URI="", test_config=None):
 
 
     # 👆 We're continuing from the steps above. Append this to your server.py file.
-    @app.route("/login")
+    @app.route("/login", methods=['GET', 'POST'])
     def login():
         return oauth.auth0.authorize_redirect(
         redirect_uri=url_for("callback", _external=True))
@@ -54,7 +54,7 @@ def create_app(db_URI="", test_config=None):
         session["user"] = token
         return redirect("/")
     
-    @app.route("/logout")
+    @app.route("/logout", methods=['GET', 'POST'])
     def logout():
         session.clear()
         return redirect(
@@ -64,7 +64,7 @@ def create_app(db_URI="", test_config=None):
                 "returnTo": url_for("home", _external=True),
                 "client_id": os.getenv("AUTH0_CLIENT_ID"),},quote_via=quote_plus,))
 
-    @app.route("/")
+    @app.route("/", methods=['GET', 'POST'])
     def home():
         return render_template("home.html", session=session.get('user'), pretty=json.dumps(session.get('user'), indent=4))
     
