@@ -27,7 +27,7 @@ Werkzeug
 python-dotenv
 authlib
 requests
-ssl
+ssl==2.0
 astroid
 Click
 ecdsa
