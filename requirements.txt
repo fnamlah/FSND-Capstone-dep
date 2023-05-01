@@ -1,5 +1,4 @@
 datetime
-json
 blinker
 click
 ecdsa
