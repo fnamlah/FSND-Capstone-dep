@@ -1,11 +1,25 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, abort, session
 from models import db, Store, setup_db, db_drop_and_create_all, Product
 from auth import AuthError, requires_auth, req_auth
 from flask_cors import CORS
-
+import os
+from urllib.parse import quote_plus, urlencode
+from authlib.integrations.flask_client import OAuth
+from dotenv import find_dotenv, load_dotenv
+import json
 
 def create_app(db_URI="", test_config=None):
     app = Flask(__name__)
+    app.secret_key = os.getenv("APP_SECRET_KEY")
+    oauth = OAuth(app)
+    oauth.register(
+    "auth0",
+    client_id=os.getenv("AUTH0_CLIENT_ID"),
+    client_secret=os.getenv("AUTH0_CLIENT_SECRET"),
+    client_kwargs={
+        "scope": "openid profile email",
+    },
+    server_metadata_url=f'https://{os.getenv("AUTH0_DOMAIN")}/.well-known/openid-configuration')
     if db_URI:
         with app.app_context():
             setup_db(app,db_URI)
@@ -28,9 +42,32 @@ def create_app(db_URI="", test_config=None):
 
 
 
-    @app.route('/', methods=['GET', 'POST'])
-    def landing_page():
-        return 'hello world'
+    # 👆 We're continuing from the steps above. Append this to your server.py file.
+
+    @app.route("/")
+    def home():
+        return render_template("home.html", session=session.get('user'), pretty=json.dumps(session.get('user'), indent=4))d'
+    
+    @app.route("/login")
+    def login():
+        return oauth.auth0.authorize_redirect(
+        redirect_uri=url_for("callback", _external=True))
+    
+    @app.route("/callback", methods=["GET", "POST"])
+    def callback():
+        token = oauth.auth0.authorize_access_token()
+        session["user"] = token
+        return redirect("/")
+    
+    @app.route("/logout")
+    def logout():
+        session.clear()
+        return redirect(
+            "https://" + os.getenv("AUTH0_DOMAIN")
+            + "/v2/logout?"
+            + urlencode({
+                "returnTo": url_for("home", _external=True),
+                "client_id": os.getenv("AUTH0_CLIENT_ID"),},quote_via=quote_plus,))
 
     @app.route('/login-results', methods=['GET', 'POST'])
     @req_auth
