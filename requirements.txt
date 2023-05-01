@@ -1,5 +1,4 @@
 datetime
-functools
 json
 blinker
 click
