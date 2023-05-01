@@ -10,16 +10,16 @@ import json
 
 def create_app(db_URI="", test_config=None):
     app = Flask(__name__)
-    app.secret_key = os.environ("APP_SECRET_KEY")
+    app.secret_key = os.getenv("APP_SECRET_KEY")
     oauth = OAuth(app)
     oauth.register(
     "auth0",
-    client_id=os.environ("AUTH0_CLIENT_ID"),
-    client_secret=os.environnv("AUTH0_CLIENT_SECRET"),
+    client_id=os.getenv("AUTH0_CLIENT_ID"),
+    client_secret=os.getenv("AUTH0_CLIENT_SECRET"),
     client_kwargs={
         "scope": "openid profile email",
     },
-    server_metadata_url=f'https://{os.environ("AUTH0_DOMAIN")}/.well-known/openid-configuration')
+    server_metadata_url=f'https://{os.getenv("AUTH0_DOMAIN")}/.well-known/openid-configuration')
     if db_URI:
         with app.app_context():
             setup_db(app,db_URI)
