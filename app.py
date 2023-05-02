@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, abort, session
-from models import db, Store, setup_db, db_drop_and_create_all, Product
+# from models import db, Store, setup_db, db_drop_and_create_all, Product
 from auth import AuthError, requires_auth, req_auth
 from flask_cors import CORS
 import os
@@ -7,19 +7,12 @@ from urllib.parse import quote_plus, urlencode
 from authlib.integrations.flask_client import OAuth
 from dotenv import find_dotenv, load_dotenv
 import json
+from models import db, Store, setup_db, db_drop_and_create_all, Product
 
 def create_app(db_URI="", test_config=None):
     app = Flask(__name__)
     app.secret_key = os.getenv("APP_SECRET_KEY")
-    oauth = OAuth(app)
-    oauth.register(
-    "auth0",
-    client_id=os.getenv("AUTH0_CLIENT_ID"),
-    client_secret=os.getenv("AUTH0_CLIENT_SECRET"),
-    client_kwargs={
-        "scope": "openid profile email",
-    },
-    server_metadata_url=f'https://{os.getenv("AUTH0_DOMAIN")}/.well-known/openid-configuration')
+ 
     if db_URI:
         with app.app_context():
             setup_db(app,db_URI)
@@ -41,38 +34,14 @@ def create_app(db_URI="", test_config=None):
         return response
 
 
-
-    # 👆 We're continuing from the steps above. Append this to your server.py file.
-    @app.route("/login", methods=['GET', 'POST'])
-    def login():
-        return oauth.auth0.authorize_redirect(
-        redirect_uri=url_for("callback", _external=True))
-    
-    @app.route("/callback", methods=["GET", "POST"])
-    def callback():
-        token = oauth.auth0.authorize_access_token()
-        session["user"] = token
-        return redirect("/")
-    
-    @app.route("/logout", methods=['GET', 'POST'])
-    def logout():
-        session.clear()
-        return redirect(
-            "https://" + os.getenv("AUTH0_DOMAIN")
-            + "/v2/logout?"
-            + urlencode({
-                "returnTo": url_for("home", _external=True),
-                "client_id": os.getenv("AUTH0_CLIENT_ID"),},quote_via=quote_plus,))
-
-    @app.route("/", methods=['GET', 'POST'])
-    def home():
-        return render_template("home.html", session=session.get('user'), pretty=json.dumps(session.get('user'), indent=4))
-    
+    @app.route('/')
+    def index():
+        return 'hello world'
 
     @app.route('/login-results', methods=['GET', 'POST'])
-    @req_auth
-    def login_results(jwt):
-        print(jwt)
+    # @req_auth
+    def login_results():
+        
         return 'successfull login'
 
 
@@ -140,18 +109,7 @@ def create_app(db_URI="", test_config=None):
             'products': [product.format() for product in products]
         })
 
-    @app.route('/product/<int:product_id>/stores', methods=['GET'])
-    @requires_auth('get:stores')
-    def get_stores_for_product(product_id, jwt):
-        product = Product.query.get(product_id)
-        if not product:
-            # Raise a 404 error if the product is not found
-            abort(404)
-        stores = Store.query.filter(Store.product_id == products_id).all()
-        return jsonify({
-            'success': True,
-            'stores': [store.format() for store in stores]
-        })
+
     ## _______________________________________________________ POST _______________________________________________________
 
     @app.route('/store', methods=['GET', 'POST'])
@@ -192,9 +150,9 @@ def create_app(db_URI="", test_config=None):
     ## _______________________________________________________ PATCH _______________________________________________________
     @app.route('/store/<int:store_id>', methods=['PATCH'])
     @requires_auth('patch:store')
-    def update_store(store_id, jwt):
+    def update_store(jwt, store_id):
         try:
-            store = Store.query.get(store_id)
+            store = Store.query.order_by(Store.id == store_id).first()
             if not store:
                 # Raise a 404 error if the store is not found
                 abort(404)
@@ -213,9 +171,9 @@ def create_app(db_URI="", test_config=None):
 
     @app.route('/product/<int:product_id>', methods=['PATCH'])
     @requires_auth('patch:product')
-    def update_product(product_id, jwt):
+    def update_product(jwt, product_id):
         try:
-            product = Product.query.get(product_id)
+            product = Product.query.order_by(Product.id == product_id).first()
             if not product:
                 # Raise a 404 error if the product is not found
                 abort(404)
@@ -241,8 +199,9 @@ def create_app(db_URI="", test_config=None):
     ## _______________________________________________________ DELETE _______________________________________________________
     @app.route('/store/<int:store_id>', methods=['DELETE'])
     @requires_auth('delete:store')
-    def delete_store(store_id, jwt):
-        store = Store.query.get(store_id)
+    def delete_store(jwt, store_id):
+        print(store_id)
+        store = Store.query.order_by(Store.id == store_id).first()
         if not store:
             abort(404)
         store.delete()
@@ -253,8 +212,8 @@ def create_app(db_URI="", test_config=None):
 
     @app.route('/product/<int:product_id>', methods=['DELETE'])
     @requires_auth('delete:product')
-    def delete_product(product_id, jwt):
-        product = Product.query.get(product_id)
+    def delete_product(jwt, product_id):
+        product = Product.query.order_by(Product.id == product_id).first()
         if not product:
             abort(404)
         product.delete()
@@ -265,8 +224,8 @@ def create_app(db_URI="", test_config=None):
 
     @app.route('/store/<int:store_id>/products', methods=['DELETE'])
     @requires_auth('delete:products')
-    def delete_products_for_store(store_id, jwt):
-        store = Store.query.get(store_id)
+    def delete_products_for_store(jwt, store_id):
+        store = Store.query.order_by(Store.id == store_id).first()
         if not store:
             abort(404)
         products = Product.query.filter(Product.store_id == store_id).all()
